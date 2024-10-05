@@ -1,29 +1,49 @@
 version: "3"
 
+# 该 Docker Compose 文件定义了一个多容器的 Docker 应用程序，其中包括 Redis 服务器、一个 Web 服务器以及三个爬虫服务。
+# 前文指定了 Docker Compose 文件的版本为 3。
+
+# services 关键字下定义了所有要运行的容器服务。
 services:
 
     redis:
+        # 使用官方的 redis 镜像。
         image: redis
+        # 容器命名为 redis。
         container_name: redis
+        # 暴露端口 6379（但仅对同一网络中的其他容器可见）。
         expose:
             - 6379
+        #分配了一个伪终端（tty: true），通常用于调试。
         tty: true
 
     webserver:
+        # 从 ./webserver 目录构建镜像。
         build: ./webserver
+        # 容器命名为 webserver。
         container_name: webserver
+        #暴露端口 8001（但同样仅对同一网络中的其他容器可见）。
         expose:
             - 8001
+        #将容器的 8001 端口映射到主机的 8001 端口。
         ports:
             - "8001:8001"
+        #分配了一个伪终端。
         tty: true
+        #使用自定义命令 sh /start-server.sh 启动容器。
         command: sh /start-server.sh
 
     spider-one:
+        # (与 spider-two 和 spider-three 类似)
+        # 每个爬虫服务都从 ./spider/weibo_client 目录构建镜像。
         build: ./spider/weibo_client
+        # 容器分别命名为 spider-one、spider-two 和 spider-three。
         container_name: spider-one
+        #分配了伪终端。
         tty: true
+        #使用自定义命令 sh /run_crawl.sh 启动。
         command: sh /run_crawl.sh
+        #通过 links 关键字连接到 redis 和 webserver 服务（但请注意，links 在 Docker Compose 的较新版本中已被视为遗留特性，建议使用网络来连接服务）。
         links:
             - redis
             - webserver
